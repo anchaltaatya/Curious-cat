@@ -1,0 +1,120 @@
+from scrabble_self_play import *
+import time
+from perm import *
+
+def comp_choose_word(hand, word_list):
+    """
+	Given a hand and a word_dict, find the word that gives the maximum value score, and return it.
+   	This word should be calculated by considering all possible permutations of lengths 1 to HAND_SIZE.
+
+    hand: dictionary (string -> int)
+    word_list: list (string)
+    """
+    iterate = 1
+    score = 0
+    max_score_word = None
+    while iterate <= sum(hand.values()):
+        for w in set(get_perms(hand, iterate)) & set(word_list):
+            if score < get_word_score(w, sum(hand.values())):
+                score = get_word_score(w, sum(hand.values()))
+                max_score_word = w
+        iterate += 1
+    return max_score_word
+                
+            
+#
+# Computer plays a hand
+#
+def comp_play_hand(hand, word_list):
+    """
+     Allows the computer to play the given hand, as follows:
+
+     * The hand is displayed.
+
+     * The computer chooses a word using comp_choose_words(hand, word_dict).
+
+     * After every valid word: the score for that word is displayed, 
+       the remaining letters in the hand are displayed, and the computer 
+       chooses another word.
+
+     * The sum of the word scores is displayed when the hand finishes.
+
+     * The hand finishes when the computer has exhausted its possible choices (i.e. comp_play_hand returns None).
+
+     hand: dictionary (string -> int)
+     word_list: list (string)
+    """
+    original_handlen=calculate_handlen(hand)
+    total = 0
+    while calculate_handlen(hand) > 0:
+        print 'Current Hand:',
+        display_hand(hand)
+        compWord = comp_choose_word(hand, word_list)
+        if compWord == None or compWord == '' :
+            print 'Total score: %d points.' % total
+            return'Computer finished playing.'
+        else:
+            isValid = is_valid_word(compWord, hand, word_list)
+            if not isValid:
+                print 'That is not a valid word. Please choose another word'
+            else:
+                point = get_word_score(compWord, original_handlen) # calculate points
+                total += point # add points to total
+                print '"%s" earned %d points. Total: %d points' % (compWord, point, total)# display points and total
+                hand = update_hand(hand, compWord) # update hand
+    print 'Finished. Total score: %d points.' % total
+
+    
+def play_game(word_list):
+    """Allow the user to play an arbitrary number of hands.
+
+    1) Asks the user to input 'n' or 'r' or 'e'.
+    * If the user inputs 'n', play a new (random) hand.
+    * If the user inputs 'r', play the last hand again.
+    * If the user inputs 'e', exit the game.
+    * If the user inputs anything else, ask them again.
+
+    2) Ask the user to input a 'u' or a 'c'.
+    * If the user inputs 'u', let the user play the game as before using play_hand.
+    * If the user inputs 'c', let the computer play the game using comp_play_hand (created above).
+    * If the user inputs anything else, ask them again.
+
+    3) After the computer or user has played the hand, repeat from step 1
+
+    word_list: list (string)
+    """
+    hand = deal_hand(HAND_SIZE)
+    while True:
+        cmd = raw_input('Enter n to deal a new hand, r to replay the last hand, or e to end game: ')
+        if cmd == 'n':
+            player_mode = raw_input('Enter u to play game, c to let computer play game: ')
+            hand = deal_hand(HAND_SIZE)
+            if player_mode == 'u':
+                play_hand(hand.copy(), word_list)
+                print
+            elif player_mode == 'c':
+                comp_play_hand(hand.copy(), word_list)
+                print
+            else:
+                print "Invalid command."
+                       
+        elif cmd == 'r':
+            player_mode = raw_input('Enter u to play game, c to let computer play game: ')
+            if player_mode == 'u':
+                play_hand(hand.copy(), word_list)
+                print
+            elif player_mode == 'c':
+                comp_play_hand(hand.copy(), word_list)
+                print
+            else:
+                print "Invalid command."
+        elif cmd == 'e':
+            break
+        else:
+            print "Invalid command."
+        
+if __name__ == '__main__':
+    word_list = load_words()
+    play_game(word_list)
+
+    
