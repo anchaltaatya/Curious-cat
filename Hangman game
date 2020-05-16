@@ -4,7 +4,7 @@
 import random
 import string
 
-WORDLIST_FILENAME = "words.txt"
+WORDLIST_FILENAME = "words_hangman.txt"
 
 def load_words():
     """
