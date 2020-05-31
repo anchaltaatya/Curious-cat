@@ -1,0 +1,259 @@
+##Use words_caesar.txt to run this or add your own text files. 
+##This is a multilayered Caesar Cipher which means Caesar Cipher is applied again and again on the whole text but every time from a new start point in the same text. 
+##It returns a Tuple of start position and shifts.
+
+import string
+import random
+
+WORDLIST_FILENAME = "words_caesar.txt"
+
+
+def load_words():
+    """
+    Returns a list of valid words. Words are strings of lowercase letters.
+    
+    Depending on the size of the word list, this function may
+    take a while to finish.
+    """
+    print "Loading word list from file..."
+    # inFile: file
+    inFile = open(WORDLIST_FILENAME, 'r', 0)
+    # line: string
+    line = inFile.readline()
+    # wordlist: list of strings
+    wordlist = line.split()
+    print "  ", len(wordlist), "words loaded."
+    return wordlist
+
+wordlist = load_words()
+
+def is_word(wordlist, word):
+    """
+    Determines if word is a valid word.
+
+    wordlist: list of words in the dictionary.
+    word: a possible word.
+    returns True if word is in wordlist.
+
+    Example:
+    >>> is_word(wordlist, 'bat') returns
+    True
+    >>> is_word(wordlist, 'asdf') returns
+    False
+    """
+    word = word.lower()
+    word = word.strip(" !@#$%^&*()-_+={}[]|\:;'<>?,./\"")
+    return word in wordlist
+
+def random_word(wordlist):
+    """
+    Returns a random word.
+
+    wordlist: list of words  
+    returns: a word from wordlist at random
+    """
+    return random.choice(wordlist)
+
+def random_string(wordlist, n):
+    """
+    Returns a string containing n random words from wordlist
+
+    wordlist: list of words
+    returns: a string of random words separated by spaces.
+    """
+    return " ".join([random_word(wordlist) for _ in range(n)])
+
+def random_scrambled(wordlist, n):
+    """
+    Generates a test string by generating an n-word random string
+    and encrypting it with a sequence of random shifts.
+
+    wordlist: list of words
+    n: number of random words to generate and scamble
+    returns: a scrambled string of n random words
+
+
+    NOTE:
+    This function will ONLY work once you have completed your
+    implementation of apply_shifts!
+    """
+    s = random_string(wordlist, n) + " "
+    shifts = [(i, random.randint(0, 26)) for i in range(len(s)) if s[i-1] == ' ']
+    return apply_shifts(s, shifts)[:-1]
+
+def get_fable_string():
+    """
+    Returns a fable in encrypted text.
+    """
+    f = open("fable.txt", "r")
+    fable = str(f.read())
+    f.close()
+    return fable
+
+
+############
+
+def get_key(val, dict): 
+    for key, value in dict.items(): 
+         if value == val: 
+             return key
+def get_val(key, dict): 
+    for key_loc, value in dict.items(): 
+         if key_loc == key: 
+             return value
+
+def build_encoder(shift):
+    shift_loc = shift
+    string_dict_lower = {chr(i+96):i for i in range(1,27)}
+    string_dict_upper = {chr(i+64):i for i in range(1,27)}
+    string_dict_lower.update({' ': 27})
+    string_dict_upper.update({' ': 27})
+    string_dict_lower_new = string_dict_lower.copy()
+    string_dict_upper_new = string_dict_upper.copy()
+    if shift_loc < 0:
+        shift_loc = shift_loc + 27
+
+    for key, value in string_dict_lower_new.items(): 
+        if value + shift_loc > 27:
+            string_dict_lower_new[key] = value + shift_loc - 27
+        else:
+            string_dict_lower_new[key] = value + shift_loc
+
+    for key, value in string_dict_lower_new.items():
+        string_dict_lower_new[key] = get_key(value, string_dict_lower )
+
+    for key, value in string_dict_upper_new.items(): 
+        if value + shift_loc > 27:
+            string_dict_upper_new[key] = value + shift_loc - 27
+        else:
+            string_dict_upper_new[key] = value + shift_loc
+
+    for key, value in string_dict_upper_new.items():
+        string_dict_upper_new[key] = get_key(value, string_dict_upper)
+
+    string_dict_upper_new.update(string_dict_lower_new)   
+    return string_dict_upper_new
+
+def build_decoder(shift):
+    shift_loc = -shift
+    string_dict_lower = {chr(i+96):i for i in range(1,27)}
+    string_dict_upper = {chr(i+64):i for i in range(1,27)}
+    string_dict_lower.update({' ': 27})
+    string_dict_upper.update({' ': 27})
+    string_dict_lower_new = string_dict_lower.copy()
+    string_dict_upper_new = string_dict_upper.copy()
+    if shift_loc < 0:
+        shift_loc = shift_loc + 27
+
+    for key, value in string_dict_lower_new.items(): 
+        if value + shift_loc > 27:
+            string_dict_lower_new[key] = value + shift_loc - 27
+        else:
+            string_dict_lower_new[key] = value + shift_loc
+
+    for key, value in string_dict_lower_new.items():
+        string_dict_lower_new[key] = get_key(value, string_dict_lower )
+
+    for key, value in string_dict_upper_new.items(): 
+        if value + shift_loc > 27:
+            string_dict_upper_new[key] = value + shift_loc - 27
+        else:
+            string_dict_upper_new[key] = value + shift_loc
+
+    for key, value in string_dict_upper_new.items():
+        string_dict_upper_new[key] = get_key(value, string_dict_upper)
+
+    string_dict_upper_new.update(string_dict_lower_new)   
+    return string_dict_upper_new
+
+def apply_coder(text, coder):
+    new_text = ''
+    for i in text:
+        if get_val(i, coder) != None:
+            new_text = new_text + get_val(i, coder)
+        else:
+            new_text = new_text + i
+    return new_text
+
+def apply_shift(text, shift):
+    new_text = ''
+    coder = build_encoder(shift)
+    for i in text:
+        if get_val(i, coder) != None:
+            new_text = new_text + get_val(i, coder)
+        else:
+            new_text = new_text + i
+    return new_text
+
+    
+
+def find_best_shift(wordlist, text):
+    new_text = ''
+    word_count = 0
+    shift = 0
+    for i in range (1,28):
+        new_text = apply_coder(text, build_decoder(i))
+        new_word = ''
+        match_word_count = 0 
+        for y in new_text:
+            if y != ' ':
+                new_word += y
+            elif is_word(wordlist, new_word) == True:
+                match_word_count += 1
+                new_word = ''
+        if word_count < match_word_count:
+            word_count = match_word_count
+            shift = i
+    return shift
+
+def apply_shifts(text, shifts):
+    new_text = text
+    for (i, v) in shifts :
+        shifted_text = apply_shift(new_text[i:], v)
+        new_text = new_text[:i] + shifted_text     
+    return new_text
+
+
+def find_best_shifts(wordlist, text, start):
+
+  """
+      Given a scrambled string and a starting position from which
+      to decode, returns a shift key that will decode the text to
+      words in wordlist, or None if there is no such key.
+
+      wordlist: list of words
+      text: scambled text to try to find the words for
+      start: where to start looking at shifts
+      returns: list of tuples.  each tuple is (position in text, amount of shift)
+      """
+      
+    if text == '':
+        return []
+    else:
+        shift = find_best_shift(wordlist, text)
+        new_text = apply_shift(text, -shift)
+        sentence_split = new_text.split()
+        new_word =''
+        for i in sentence_split:
+            if is_word(wordlist, i) == True:
+                if i == sentence_split[-1]:
+                    new_word += i
+                else:
+                    new_word += i + ' '
+        smaller_text = new_text.replace(new_word,'')
+        print smaller_text
+        head = [(start, shift)]
+        print head
+        print new_text
+        start += new_text.index(smaller_text)
+        return head + find_best_shifts(wordlist, smaller_text, start)
+
+
+
+
+    
+    
+    
+    
+    
+    
